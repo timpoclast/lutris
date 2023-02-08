@@ -363,6 +363,7 @@ class EpicGamesStoreService(OnlineService):
         logger.debug("All EGS games imported")
 
     def generate_installer(self, db_game, egs_db_game):
+        logger.debug("EGS Game data: %s" % str(egs_db_game))
         egs_game = Game(egs_db_game["id"])
         egs_exe = egs_game.config.game_config["exe"]
         if not os.path.isabs(egs_exe):
