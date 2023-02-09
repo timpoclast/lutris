@@ -365,7 +365,11 @@ class EpicGamesStoreService(OnlineService):
     def generate_installer(self, db_game, egs_db_game):
         logger.debug("EGS Game data: %s" % str(egs_db_game))
         egs_game = Game(egs_db_game["id"])
-        egs_exe = egs_game.config.game_config["exe"]
+        try:
+            egs_exe = egs_game.config.game_config["exe"]
+        except:
+            print(egs_game.config.game_config)
+
         if not os.path.isabs(egs_exe):
             egs_exe = os.path.join(egs_game.config.game_config["prefix"], egs_exe)
         return {
