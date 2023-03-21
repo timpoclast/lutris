@@ -95,6 +95,7 @@ class GameActions:
             ("view", _("View on Lutris.net"), self.on_view_game),
             ("hide", _("Hide game from library"), self.on_hide_game),
             ("unhide", _("Unhide game from library"), self.on_unhide_game),
+            ("export_autoinstaller", _("Export game autoinstaller"), self.on_export_autoinstaller),
         ]
 
     def get_displayed_entries(self):
@@ -150,6 +151,9 @@ class GameActions:
             "view": True,
             "hide": self.game.is_installed and not self.game.is_hidden,
             "unhide": self.game.is_hidden,
+            "export-autoinstaller": bool(
+                self.game.service
+            )
         }
 
     def on_game_launch(self, *_args):
@@ -264,6 +268,10 @@ class GameActions:
     def on_unhide_game(self, _widget):
         """Removes a game from the list of hidden games"""
         self.game.set_hidden(False)
+
+    def on_export_autoinstaller(self, _widget):
+        """Removes a game from the list of hidden games"""
+        self.game.export_autoinstaller()
 
     def on_execute_script_clicked(self, _widget):
         """Execute the game's associated script"""

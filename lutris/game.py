@@ -132,6 +132,7 @@ class Game(GObject.Object):
         if game_data.get("has_custom_coverart_big"):
             self.custom_images.add("coverart_big")
         self.service = game_data.get("service")
+        self.export_auto_config = bool(game_data.get("service"))
         self.appid = game_data.get("service_id")
         self.playtime = float(game_data.get("playtime") or 0.0)
 
@@ -239,6 +240,9 @@ class Game(GObject.Object):
         self.is_hidden = is_hidden
         self.save()
         self.emit("game-updated")
+
+    def export_auto_config():
+        pass
 
     @property
     def log_buffer(self):
