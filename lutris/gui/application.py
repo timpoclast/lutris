@@ -49,6 +49,7 @@ from lutris.style_manager import StyleManager
 from lutris.util import datapath, log, system
 from lutris.util.http import HTTPError, Request
 from lutris.util.log import logger
+from lutris.util.yaml import write_yaml_to_file
 from lutris.util.steam.appmanifest import AppManifest, get_appmanifests
 from lutris.util.steam.config import get_steamapps_paths
 from lutris.services import get_enabled_services
@@ -66,11 +67,11 @@ class Application(Gtk.Application):
             flags=Gio.ApplicationFlags.HANDLES_COMMAND_LINE,
             register_session=True,
         )
-
         GObject.add_emission_hook(Game, "game-launch", self.on_game_launch)
         GObject.add_emission_hook(Game, "game-start", self.on_game_start)
         GObject.add_emission_hook(Game, "game-stop", self.on_game_stop)
         GObject.add_emission_hook(Game, "game-install", self.on_game_install)
+        GObject.add_emission_hook(Game, "game-export-autoinstaller", self.on_game_export_autoinstaller)
         GObject.add_emission_hook(Game, "game-install-update", self.on_game_install_update)
         GObject.add_emission_hook(Game, "game-install-dlc", self.on_game_install_dlc)
 
@@ -727,6 +728,17 @@ class Application(Gtk.Application):
             self.show_installer_window(installers)
         else:
             ErrorDialog(_("There is no installer available for %s.") % game.name, parent=self.window)
+        return True
+
+    @watch_errors(error_result=True)
+    def on_game_export_autoinstaller(self, game):
+        service = get_enabled_services()[game.service]()
+        db_game = ServiceGameCollection.get_game(service.id, game.appid)
+
+        installer = service.generate_installer(db_game)
+        
+        write_yaml_to_file(installer, f"/home/tim/Desktop/{installer['game_slug']}-export.yml")
+
         return True
 
     @watch_errors(error_result=True)

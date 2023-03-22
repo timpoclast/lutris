@@ -152,7 +152,7 @@ class GameActions:
             "hide": self.game.is_installed and not self.game.is_hidden,
             "unhide": self.game.is_hidden,
             "export-autoinstaller": bool(
-                self.game.service
+                self.game.from_service
             )
         }
 
@@ -271,7 +271,7 @@ class GameActions:
 
     def on_export_autoinstaller(self, _widget):
         """Removes a game from the list of hidden games"""
-        self.game.export_autoinstaller()
+        self.game.emit("game-export-autoinstaller")
 
     def on_execute_script_clicked(self, _widget):
         """Execute the game's associated script"""

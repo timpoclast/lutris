@@ -67,6 +67,7 @@ class Game(GObject.Object):
         "game-install-update": (GObject.SIGNAL_RUN_FIRST, None, ()),
         "game-install-dlc": (GObject.SIGNAL_RUN_FIRST, None, ()),
         "game-installed": (GObject.SIGNAL_RUN_FIRST, None, ()),
+        "game-export-autoinstaller": (GObject.SIGNAL_RUN_FIRST, None, ()),
     }
 
     class LaunchUIDelegate:
@@ -132,7 +133,7 @@ class Game(GObject.Object):
         if game_data.get("has_custom_coverart_big"):
             self.custom_images.add("coverart_big")
         self.service = game_data.get("service")
-        self.export_auto_config = bool(game_data.get("service"))
+        self.from_service = bool(game_data.get("service"))
         self.appid = game_data.get("service_id")
         self.playtime = float(game_data.get("playtime") or 0.0)
 
@@ -241,8 +242,9 @@ class Game(GObject.Object):
         self.save()
         self.emit("game-updated")
 
-    def export_auto_config():
-        pass
+    # def export_autoinstaller(self):
+    #     service = self.service.get_enabled_services()[self.service]()
+    #     pass
 
     @property
     def log_buffer(self):
