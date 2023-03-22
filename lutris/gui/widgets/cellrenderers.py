@@ -27,7 +27,7 @@ class GridViewCellRendererImage(Gtk.CellRenderer):
         super().__init__(*args, **kwargs)
         self._cell_width = 0
         self._cell_height = 0
-        self._pixbuf_path = None
+        self._media_path = None
         self._is_installed = True
 
     @GObject.Property(type=int, default=0)
@@ -47,12 +47,12 @@ class GridViewCellRendererImage(Gtk.CellRenderer):
         self._cell_height = value
 
     @GObject.Property(type=str)
-    def pixbuf_path(self):
-        return self._pixbuf_path
+    def media_path(self):
+        return self._media_path
 
-    @pixbuf_path.setter
-    def pixbuf_path(self, value):
-        self._pixbuf_path = value
+    @media_path.setter
+    def media_path(self, value):
+        self._media_path = value
 
     @GObject.Property(type=bool, default=True)
     def is_installed(self):
@@ -68,15 +68,30 @@ class GridViewCellRendererImage(Gtk.CellRenderer):
     def do_render(self, cr, widget, background_area, cell_area, flags):
         cell_width = self.cell_width
         cell_height = self.cell_height
-        path = self.pixbuf_path
+        path = self.media_path
+
+        def is_hard_scale_factor(scale_factor):
+            # We need to use 'BEST' filtering for difficult scaling factors,
+            # which produce edge artifacts with the faster GOOD filter.
+            # We see this if we are scaling to enlarge an image, or shrinking to
+            # arbitrary size; but Lutris icons default to 128x128, and shrink to 32x32 -
+            # that works fine. So we think x.25, x.5 and x1 are easy and all others
+            # factors hard.
+            widget_scale_factor = widget.get_scale_factor() if widget else 1
+            real_scale_factor = float(scale_factor * widget_scale_factor)
+            return real_scale_factor not in [0.25, 0.5, 1]
 
         if cell_width > 0 and cell_height > 0 and path:  # pylint: disable=comparison-with-callable
             pixbuf = get_cached_pixbuf_by_path(path, self.is_installed)
+            source_filter = cairo.Filter.GOOD  # pylint:disable=no-member
 
             if pixbuf:
                 x, y, fit_factor_x, fit_factor_y = self._get_fit_factors(pixbuf, cell_area)
+                if is_hard_scale_factor(fit_factor_x) or is_hard_scale_factor(fit_factor_y):
+                    source_filter = cairo.Filter.BEST  # pylint:disable=no-member
             else:
-                # The default icon needs to be scaled to fill the cell space
+                # The default icon needs to be scaled to fill the cell space, but it so happens
+                # that the default images do not produce edge artifacts anyway.
                 path = get_default_icon_path((cell_width, cell_height))
                 pixbuf = get_cached_pixbuf_by_path(path, self.is_installed)
                 x, y, fit_factor_x, fit_factor_y = self._get_fill_factors(pixbuf, cell_area)
@@ -86,11 +101,7 @@ class GridViewCellRendererImage(Gtk.CellRenderer):
                 cr.scale(fit_factor_x, fit_factor_y)
                 Gdk.cairo_set_source_pixbuf(cr, pixbuf, 0, 0)
 
-                if widget and widget.get_scale_factor() > 1:
-                    # This is slow, but if we're being scaled we get edge artifacts
-                    # with the default FILTER_GOOD. FILTER_NEAREST looks okay too,
-                    # but this is prettier.
-                    cr.get_source().set_filter(cairo.FILTER_BEST)
+                cr.get_source().set_filter(source_filter)  # pylint: disable=no-member
                 cr.paint()
 
     def _get_fit_factors(self, pixbuf, target_area):
